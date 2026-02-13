@@ -20,8 +20,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
+  const updateProfilePicture = (profilePicture) => {
+    const updatedUser = { ...user, profilePicture };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
+  const updateAvailability = (isAvailable) => {
+    const updatedUser = { ...user, isAvailable };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateProfilePicture, updateAvailability }}>
       {children}
     </AuthContext.Provider>
   );

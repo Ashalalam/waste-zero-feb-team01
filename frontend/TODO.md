@@ -1,9 +1,20 @@
-# TODO: Enhance Website Styling
+# TODO: Volunteer Dashboard Interactive Features
 
-- [x] Update waste-zero-feb-team01/frontend/src/index.css: Add global font family, subtle background pattern, and smooth scrolling.
-- [x] Update waste-zero-feb-team01/frontend/src/components/Navbar.jsx: Add a logo icon, better spacing, hover effects, and a gradient background.
-- [x] Update waste-zero-feb-team01/frontend/src/pages/VolunteerDashboard.jsx: Add emoji icons to cards, gradient backgrounds, hover animations, and better typography.
-- [x] Update waste-zero-feb-team01/frontend/src/pages/NgoDashboard.jsx: Similar enhancements as VolunteerDashboard, with NGO-specific icons.
-- [x] Run the development server to test the changes.
-- [x] Ensure responsiveness on different screen sizes.
-- [x] Verify that all pages load correctly with the new styles.
+## Profile Picture Feature
+- [x] Update AuthContext to handle profile picture in user state
+- [x] Create ProfileUploadModal component
+- [x] Update Sidebar to display profile picture with upload option
+- [ ] Add backend API endpoint for profile picture upload
+
+## Interactive Features for Volunteer Dashboard
+- [ ] Add "Quick Actions" section with buttons
+- [ ] Add "Recent Activity" section
+- [ ] Add "Availability Toggle"
+- [ ] Add "Notifications" bell icon with badge
+- [ ] Make stats cards clickable with hover effects
+- [ ] Add "My Achievements" badges section
+
+## Backend Updates
+- [ ] Add multer for file uploads
+- [ ] Add profile picture upload endpoint
+- [ ] Serve static files for profile images
