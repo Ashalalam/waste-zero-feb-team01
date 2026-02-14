@@ -1,20 +1,13 @@
-# TODO: Volunteer Dashboard Interactive Features
+# TODO - NGO Dashboard Profile Summary Enhancement
 
-## Profile Picture Feature
-- [x] Update AuthContext to handle profile picture in user state
-- [x] Create ProfileUploadModal component
-- [x] Update Sidebar to display profile picture with upload option
-- [ ] Add backend API endpoint for profile picture upload
+## Task
+Show profile summary with ability to upload/change profile picture for NGO Dashboard
 
-## Interactive Features for Volunteer Dashboard
-- [ ] Add "Quick Actions" section with buttons
-- [ ] Add "Recent Activity" section
-- [ ] Add "Availability Toggle"
-- [ ] Add "Notifications" bell icon with badge
-- [ ] Make stats cards clickable with hover effects
-- [ ] Add "My Achievements" badges section
+## Steps
 
-## Backend Updates
-- [ ] Add multer for file uploads
-- [ ] Add profile picture upload endpoint
-- [ ] Serve static files for profile images
+- [ ] Update NgoDashboard.jsx to display profile picture in the profile section
+- [ ] Add ProfileUploadModal integration to allow profile picture upload
+- [ ] Verify the changes work correctly
+
+## Files to Modify
+- `waste-zero-feb-team01/frontend/src/pages/NgoDashboard.jsx`
