@@ -17,7 +17,7 @@ const VolunteerDashboard = () => {
         </h1>
 
         {/* Waste Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
             title="Waste Pickups Completed"
             value="124"
@@ -34,12 +34,6 @@ const VolunteerDashboard = () => {
             title="Pending Pickup Requests"
             value="6"
             color="text-yellow-500"
-          />
-
-          <StatCard
-            title="CO₂ Emissions Saved"
-            value="1.2 Tons"
-            color="text-blue-600"
           />
         </div>
 
