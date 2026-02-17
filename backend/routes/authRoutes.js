@@ -8,12 +8,14 @@ const {
   updateUserProfile
 } = require("../controllers/authController");
 
-const { protect } = require("../middleware/authMiddleware");
+
+const authMiddleware = require("../middleware/authMiddleware");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-router.get("/me", protect, getUserProfile);
-router.put("/me", protect, updateUserProfile);
+router.get("/me", authMiddleware, getUserProfile);
+router.put("/me", authMiddleware, updateUserProfile);
+
 
 
 module.exports = router;
