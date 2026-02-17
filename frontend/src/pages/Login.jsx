@@ -82,7 +82,7 @@ const Login = () => {
           <div className="left-section">
             <div className="recycle-content">
               <div className="recycle-icon">
-                <img src="/images/Logo.png" alt="Green Leaf Recycle Logo" />
+                <img src="/images/Logo.png" alt="WasteZero Logo" />
               </div>
               <div className="recycle-text">
                 <h3>WasteZero Initiative</h3>
