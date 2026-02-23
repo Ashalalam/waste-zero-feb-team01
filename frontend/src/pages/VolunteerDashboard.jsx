@@ -6,13 +6,13 @@ import ProgressCircle from "../components/ProgressCircle";
 
 const VolunteerDashboard = () => {
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar />
 
       <div className="flex-1 p-8 space-y-8">
 
         {/* Title */}
-        <h1 className="text-3xl font-bold text-green-700">
+        <h1 className="text-3xl font-bold text-green-700 dark:text-green-400">
           🌱 WasteZero Volunteer Dashboard
         </h1>
 
@@ -21,13 +21,13 @@ const VolunteerDashboard = () => {
           <StatCard
             title="Waste Pickups Completed"
             value="124"
-            color="text-green-600"
+            color="text-green-600 dark:text-green-400"
           />
 
           <StatCard
             title="Kg Recycled"
             value="850 kg"
-            color="text-emerald-600"
+            color="text-emerald-600 dark:text-emerald-400"
           />
 
           <StatCard
@@ -54,12 +54,12 @@ const VolunteerDashboard = () => {
         </div>
 
         {/* Upcoming Cleanup Drives */}
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-lg font-semibold mb-4 text-green-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-green-700 dark:text-green-400">
             🚛 Upcoming Cleanup Drives
           </h3>
 
-          <ul className="space-y-3 text-gray-700">
+          <ul className="space-y-3 text-gray-700 dark:text-gray-300">
             <li>📍 Park Street – 18 Feb 2026</li>
             <li>📍 Eco Lake – 22 Feb 2026</li>
             <li>📍 City Market – 1 Mar 2026</li>

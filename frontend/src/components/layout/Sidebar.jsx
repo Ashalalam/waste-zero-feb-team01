@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, LogOut, Camera } from "lucide-react";
 import ProfileUploadModal from "../ui/ProfileUploadModal";
+import ThemeToggle from "../ThemeToggle";
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -57,6 +58,11 @@ const Sidebar = () => {
           Dashboard
         </button>
       </nav>
+
+      {/* Theme Toggle */}
+      <div className="mt-4 flex justify-center">
+        <ThemeToggle />
+      </div>
 
       {/* Logout */}
       <div className="mt-auto">

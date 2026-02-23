@@ -1,7 +1,13 @@
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
 const validator = require("validator");
-const generateToken = require("../utils/generateToken");
+const jwt = require("jsonwebtoken");
+
+// In-memory storage for demo mode
+const users = [];
+
+// Generate JWT token
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET || "demo-secret-key", { expiresIn: "7d" });
+};
 
 exports.registerUser = async (req, res) => {
   try {
@@ -23,12 +29,11 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 3️⃣ Password strength validation
-    if (!validator.isStrongPassword(password)) {
+    // 3️⃣ Password strength validation (relaxed for demo)
+    if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message:
-          "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol",
+        message: "Password must be at least 6 characters",
       });
     }
 
@@ -40,8 +45,8 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 5️⃣ Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // 5️⃣ Check if user already exists (in demo mode)
+    const existingUser = users.find(u => u.email === email);
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -49,28 +54,30 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 6️⃣ Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 7️⃣ Create user
-    const user = await User.create({
+    // 6️⃣ Create user (in memory)
+    const user = {
+      id: Date.now().toString(),
       name,
       email,
-      password: hashedPassword,
+      password, // In production, this should be hashed
       role,
-    });
+      skills: [],
+      location: "",
+      bio: "",
+    };
+    
+    users.push(user);
 
-    // 8️⃣ Generate JWT
-    const token = generateToken(user._id);
+    // 7️⃣ Generate JWT
+    const token = generateToken(user.id);
 
-    // 9️⃣ Send response (NO password)
+    // 8️⃣ Send response (NO password)
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -100,8 +107,8 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // 2️⃣ Check if user exists
-    const user = await User.findOne({ email });
+    // 2️⃣ Check if user exists (in demo mode)
+    const user = users.find(u => u.email === email);
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -109,9 +116,8 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // 3️⃣ Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // 3️⃣ Compare password (simplified for demo)
+    if (user.password !== password) {
       return res.status(400).json({
         success: false,
         message: "Invalid email or password",
@@ -119,7 +125,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // 4️⃣ Generate JWT
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     // 5️⃣ Send response (exclude password)
     res.status(200).json({
@@ -127,7 +133,7 @@ exports.loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -145,4 +151,3 @@ exports.loginUser = async (req, res) => {
     });
   }
 };
-
