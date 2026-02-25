@@ -24,7 +24,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 
 app.get("/", (req, res) => {
-  res.send("Backend is running 🚀 (Demo Mode)");
+  res.send("Backend is running 🚀");
 });
 
 const PORT = process.env.PORT || 5000;
