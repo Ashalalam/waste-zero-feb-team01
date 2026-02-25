@@ -1,4 +1,4 @@
-const Opportunity = require("../models/Opportunity");
+const Opportunity = require("../models/opportunity");
 
 // ==============================
 // CREATE OPPORTUNITY (NGO only)
@@ -20,7 +20,7 @@ exports.createOpportunity = async (req, res) => {
       requiredSkills,
       duration,
       location,
-      ngo: req.user._id, // extracted securely from token
+      ngo: req.user.id || req.user._id, // supports demo + DB mode
     });
 
     res.status(201).json({
@@ -28,9 +28,10 @@ exports.createOpportunity = async (req, res) => {
       opportunity,
     });
   } catch (error) {
+    console.error("Create Opportunity Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -50,9 +51,10 @@ exports.getAllOpportunities = async (req, res) => {
       opportunities,
     });
   } catch (error) {
+    console.error("Get All Opportunities Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -79,9 +81,10 @@ exports.getOpportunityById = async (req, res) => {
       opportunity,
     });
   } catch (error) {
+    console.error("Get Opportunity By ID Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -101,23 +104,27 @@ exports.updateOpportunity = async (req, res) => {
     }
 
     // Ownership check
-    if (opportunity.ngo.toString() !== req.user._id.toString()) {
+    if (opportunity.ngo.toString() !== (req.user.id || req.user._id).toString()) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this opportunity",
       });
     }
 
-    const { title, description, requiredSkills, duration, location, status } =
-      req.body;
+    const allowedFields = [
+      "title",
+      "description",
+      "requiredSkills",
+      "duration",
+      "location",
+      "status",
+    ];
 
-    opportunity.title = title || opportunity.title;
-    opportunity.description = description || opportunity.description;
-    opportunity.requiredSkills =
-      requiredSkills || opportunity.requiredSkills;
-    opportunity.duration = duration || opportunity.duration;
-    opportunity.location = location || opportunity.location;
-    opportunity.status = status || opportunity.status;
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        opportunity[field] = req.body[field];
+      }
+    });
 
     const updatedOpportunity = await opportunity.save();
 
@@ -126,9 +133,10 @@ exports.updateOpportunity = async (req, res) => {
       updatedOpportunity,
     });
   } catch (error) {
+    console.error("Update Opportunity Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -148,7 +156,7 @@ exports.deleteOpportunity = async (req, res) => {
     }
 
     // Ownership check
-    if (opportunity.ngo.toString() !== req.user._id.toString()) {
+    if (opportunity.ngo.toString() !== (req.user.id || req.user._id).toString()) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to delete this opportunity",
@@ -162,9 +170,10 @@ exports.deleteOpportunity = async (req, res) => {
       message: "Opportunity deleted successfully",
     });
   } catch (error) {
+    console.error("Delete Opportunity Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };
