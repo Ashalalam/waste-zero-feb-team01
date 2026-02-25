@@ -14,11 +14,14 @@ app.use(cors({
 
 app.use(express.json());
 
+
+
 // Connect to database (optional - works in demo mode without it)
 connectDB();
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀 (Demo Mode)");

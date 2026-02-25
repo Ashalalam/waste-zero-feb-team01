@@ -2,16 +2,17 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    if (!process.env.MONGO_URI) {
-      console.warn("MongoDB URI not configured. Running in demo mode.");
-      return;
-    }
-    
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected Successfully: ${conn.connection.host}`);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000, // increase timeout
+      socketTimeoutMS: 45000,
+      family: 4,
+      maxPoolSize: 5,
+    });
+
+    console.log("MongoDB Connected ✅");
   } catch (error) {
     console.error("MongoDB Connection Failed:", error.message);
-    console.warn("Running in demo mode without database.");
+    console.log("Running in demo mode without database.");
   }
 };
 
