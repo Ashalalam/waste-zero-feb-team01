@@ -4,16 +4,23 @@ const jwt = require("jsonwebtoken");
 // In-memory storage for demo mode
 const users = [];
 
-// Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET || "demo-secret-key", { expiresIn: "7d" });
+// 🔥 Generate JWT token (NOW INCLUDES ROLE)
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      role: user.role
+    },
+    process.env.JWT_SECRET || "demo-secret-key",
+    { expiresIn: "7d" }
+  );
 };
 
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // 1️⃣ Required field validation
+    // Required field validation
     if (!name || !email || !password || !role) {
       return res.status(400).json({
         success: false,
@@ -21,7 +28,7 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 2️⃣ Email validation
+    // Email validation
     if (!validator.isEmail(email)) {
       return res.status(400).json({
         success: false,
@@ -29,7 +36,7 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 3️⃣ Password strength validation (relaxed for demo)
+    // Password validation
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -37,7 +44,7 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 4️⃣ Role validation
+    // Role validation
     if (!["volunteer", "NGO"].includes(role)) {
       return res.status(400).json({
         success: false,
@@ -45,7 +52,7 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 5️⃣ Check if user already exists (in demo mode)
+    // Check if user already exists
     const existingUser = users.find(u => u.email === email);
     if (existingUser) {
       return res.status(400).json({
@@ -54,24 +61,23 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 6️⃣ Create user (in memory)
+    // Create user
     const user = {
       id: Date.now().toString(),
       name,
       email,
-      password, // In production, this should be hashed
+      password, // demo only
       role,
       skills: [],
       location: "",
       bio: "",
     };
-    
+
     users.push(user);
 
-    // 7️⃣ Generate JWT
-    const token = generateToken(user.id);
+    // 🔥 Generate token with role included
+    const token = generateToken(user);
 
-    // 8️⃣ Send response (NO password)
     res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -86,6 +92,7 @@ exports.registerUser = async (req, res) => {
         bio: user.bio,
       },
     });
+
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({
@@ -99,7 +106,6 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1️⃣ Required field validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -107,27 +113,17 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // 2️⃣ Check if user exists (in demo mode)
     const user = users.find(u => u.email === email);
-    if (!user) {
+    if (!user || user.password !== password) {
       return res.status(400).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
-    // 3️⃣ Compare password (simplified for demo)
-    if (user.password !== password) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
+    // 🔥 Generate token with role included
+    const token = generateToken(user);
 
-    // 4️⃣ Generate JWT
-    const token = generateToken(user.id);
-
-    // 5️⃣ Send response (exclude password)
     res.status(200).json({
       success: true,
       message: "Login successful",
