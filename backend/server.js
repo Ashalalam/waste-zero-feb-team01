@@ -1,9 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
+const passport = require("passport");
 const connectDB = require("./config/db");
 
+require("./config/passport")
 const app = express();
 
 // CORS configuration to allow frontend requests
@@ -14,6 +15,7 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(passport.initialize());
 // Connect to database (optional - works in demo mode without it)
 connectDB();
 

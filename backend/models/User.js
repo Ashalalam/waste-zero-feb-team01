@@ -15,9 +15,9 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    username: { 
-      type: String, 
-      required: true 
+    username: {
+      type: String,
+      required: true,
     },
 
     password: {
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["volunteer", "ngo", "admin"],
-      required: true,
+      default: null,
     },
 
     skills: {
@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    profilePic: { type: String },
   },
   { timestamps: true },
 );
