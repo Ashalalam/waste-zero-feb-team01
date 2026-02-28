@@ -6,11 +6,12 @@ export const AuthProvider = ({ children }) => {
 
   // user state
   const [user, setUser] = useState(null);
-  const updateUser = (updatedUserData) => {
-  setUser(updatedUserData);
-  localStorage.setItem("user", JSON.stringify(updatedUserData));
-};
+  const [loading, setLoading] = useState(true);
 
+  const updateUser = (updatedUserData) => {
+    setUser(updatedUserData);
+    localStorage.setItem("user", JSON.stringify(updatedUserData));
+  };
 
   // Load user from localStorage on app start
   useEffect(() => {
@@ -19,9 +20,9 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    setLoading(false);
 
   }, []);
-
 
   // Login function
   const login = (userData) => {
@@ -29,14 +30,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
-
   // Logout function
   const logout = () => {
-  setUser(null);
-  localStorage.removeItem("user");
-  localStorage.removeItem("token");
-};
-
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  };
 
   // Update profile picture
   const updateProfilePicture = (profilePicture) => {
@@ -52,7 +51,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
-
   // Update availability (useful for volunteers)
   const updateAvailability = (isAvailable) => {
 
@@ -67,23 +65,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
-
   return (
-   <AuthContext.Provider
-  value={{
-    user,
-    login,
-    logout,
-    updateUser,            // 🔥 ADD THIS
-    updateProfilePicture,
-    updateAvailability,
-  }}
->
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        updateUser,
+        updateProfilePicture,
+        updateAvailability,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
-
 
 // custom hook
 export const useAuth = () => useContext(AuthContext);

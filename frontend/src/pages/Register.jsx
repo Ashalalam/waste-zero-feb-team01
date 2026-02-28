@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const T = {
   gDeep:"#1b5e20", gDark:"#2e7d32", gMid:"#43a047", gLight:"#81c784",
@@ -13,7 +14,6 @@ const T = {
 const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
-/* ── page: same dark forest bg as Login ── */
 const pageStyle = {
   minHeight: "100vh",
   display: "flex", alignItems: "center", justifyContent: "center",
@@ -129,6 +129,7 @@ const focusOff = (e) => { e.target.style.borderColor = T.bSand; e.target.style.b
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -140,9 +141,29 @@ const Register = () => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) { setError("Passwords do not match"); return; }
     setError(""); setIsLoading(true);
-    try { await registerUser(formData); navigate("/"); }
-    catch { setError("Registration failed. Please try again."); }
-    finally { setIsLoading(false); }
+    
+    const { username, confirmPassword, ...registerData } = formData;
+    registerData.role = registerData.role.toLowerCase();
+    registerData.email = registerData.email.toLowerCase().trim();
+    
+    try { 
+      const response = await registerUser(registerData);
+      // Store token and login user after successful registration
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        login(response.data.user);
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "";
+      if (errorMessage.includes("already exists")) {
+        setError("An account with this email already exists. Please login.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } finally { setIsLoading(false); }
   };
 
   const inp = (name, placeholder, type = "text", extra = {}) => (
@@ -154,7 +175,6 @@ const Register = () => {
   return (
     <div style={pageStyle}>
       <div style={S.card}>
-        {/* Left */}
         <div style={S.left}>
           <div style={S.ring(360,360,"-100px","-100px",undefined,undefined,".04")} />
           <div style={S.ring(220,220,undefined,undefined,"-60px","-60px",".03")} />
@@ -173,7 +193,6 @@ const Register = () => {
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
 
-        {/* Right */}
         <div style={S.right}>
           <div style={S.rightGlow} />
           <div style={S.tabs}>
@@ -210,7 +229,7 @@ const Register = () => {
               <label style={S.label}>Role</label>
               <select name="role" value={formData.role} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.select}>
                 <option value="volunteer">Volunteer</option>
-                <option value="ngo">NGO</option>
+                <option value="NGO">NGO</option>
                 <option value="admin">Admin</option>
               </select>
             </div>

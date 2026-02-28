@@ -16,26 +16,44 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    if (!formData.email || !formData.password) { setError("Please fill all fields"); setIsLoading(false); return; }
+    if (!formData.email || !formData.password) { 
+      setError("Please fill all fields"); 
+      setIsLoading(false); 
+      return; 
+    }
     setError("");
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        body: JSON.stringify({ email: formData.email.toLowerCase().trim(), password: formData.password }),
       });
+      
       const data = await response.json();
-      if (!response.ok) { setError(data.message || "Login failed"); return; }
+      
+      console.log("Login response:", data);
+      
+      if (!response.ok) { 
+        setError(data.message || "Login failed"); 
+        setIsLoading(false);
+        return; 
+      }
+      
+      // Store token and login user
       localStorage.setItem("token", data.token);
       login(data.user);
-      navigate("/dashboard");
-    } catch { setError("Login failed. Please try again."); }
-    finally { setIsLoading(false); }
+      navigate("/dashboard-select");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider) => {
     login({ name: `${provider} User`, role: "volunteer", email: `user@${provider.toLowerCase()}.com` });
-    navigate("/dashboard");
+    navigate("/dashboard-select");
   };
 
   return (
