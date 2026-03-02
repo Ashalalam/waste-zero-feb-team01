@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -14,21 +15,22 @@ app.use(cors({
 
 app.use(express.json());
 
-// Connect to database (optional - works in demo mode without it)
+// Connect to database
 connectDB();
 
-// Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-
-app.use("/api/users", require("./routes/userRoutes"));
-
+// ── Routes ────────────────────────────────────────────────────
+app.use("/api/auth",          require("./routes/authRoutes"));
+app.use("/api/users",         require("./routes/userRoutes"));
+app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 
 app.get("/", (req, res) => {
-  res.send("Backend is running 🚀 (Demo Mode)");
+  res.send("Backend is running 🚀");
 });
 
-const PORT = process.env.PORT || 5000;
+// ── Centralized error handler (must be LAST) ──────────────────
+app.use(errorHandler);
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
