@@ -4,51 +4,46 @@ const opportunitySchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "Title is required"],
+      required: true,
       trim: true,
     },
 
     description: {
       type: String,
-      required: [true, "Description is required"],
-      trim: true,
+      required: true,
     },
 
-    required_skills: {
+    requiredSkills: {
       type: [String],
       default: [],
     },
 
     duration: {
       type: String,
-      required: [true, "Duration is required"],
-      trim: true,
+      default: "",
     },
 
     location: {
       type: String,
-      required: [true, "Location is required"],
-      trim: true,
+      default: "",
     },
 
     status: {
       type: String,
-      enum: ["open", "closed", "in-progress"],
+      enum: ["open", "closed"],
       default: "open",
     },
 
-    ngo_id: {
+    // 🔐 NGO who created this opportunity
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// ── Indexes for faster querying ──────────────────────────────
-opportunitySchema.index({ ngo_id: 1 });
-opportunitySchema.index({ location: 1 });
-opportunitySchema.index({ status: 1 });
-
-module.exports = mongoose.model("Opportunity", opportunitySchema);
+module.exports = mongoose.model("Opportunity", opportunitySchema);  

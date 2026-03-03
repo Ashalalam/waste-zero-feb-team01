@@ -1,4 +1,4 @@
-/**
+ /**
  * Centralized error handler middleware
  * Must be registered LAST in server.js:
  *   app.use(errorHandler);
