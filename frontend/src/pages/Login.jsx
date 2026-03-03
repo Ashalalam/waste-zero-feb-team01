@@ -17,6 +17,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    if (!formData.email || !formData.password) { 
+      setError("Please fill all fields"); 
+      setIsLoading(false); 
+      return; 
     if (!formData.email || !formData.password) {
       setError("Please fill all fields");
       setIsLoading(false);
@@ -27,12 +31,29 @@ const Login = () => {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email.toLowerCase().trim(), password: formData.password }),
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
         }),
       });
+      
       const data = await response.json();
+      
+      console.log("Login response:", data);
+      
+      if (!response.ok) { 
+        setError(data.message || "Login failed"); 
+        setIsLoading(false);
+        return; 
+      }
+      
+      // Store token and login user
+      localStorage.setItem("token", data.token);
+      login(data.user);
+      navigate("/dashboard-select");
+    } catch (err) {
+      console.error("Login error:", err);
       if (!response.ok) {
         setError(data.message || "Login failed");
         return;
@@ -48,6 +69,8 @@ const Login = () => {
   };
 
   const handleSocialLogin = (provider) => {
+    login({ name: `${provider} User`, role: "volunteer", email: `user@${provider.toLowerCase()}.com` });
+    navigate("/dashboard-select");
     const userData = {
       name: `${provider} User`,
       role: "volunteer",

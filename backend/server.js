@@ -6,6 +6,8 @@ const connectDB = require("./config/db");
 
 const app = express();
 
+app.use(cors({
+  origin: true,
 // CORS configuration to allow frontend requests
 app.use(cors({
   origin: "http://localhost:5173",
@@ -14,21 +16,33 @@ app.use(cors({
 
 app.use(express.json());
 
+const startServer = async () => {
+  try {
+    await connectDB();
 // Connect to database (optional - works in demo mode without it)
 connectDB();
 
-// Routes
-app.use("/api/auth", require("./routes/authRoutes"));
+    app.use("/api/auth", require("./routes/authRoutes"));
+    app.use("/api/users", require("./routes/userRoutes"));
+    app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 
-app.use("/api/users", require("./routes/userRoutes"));
+    app.get("/", (req, res) => {
+      res.send("Backend is running");
+    });
 
+    const PORT = process.env.PORT || 5000;
 
+    app.listen(PORT, () => {
+      console.log("Server running on port " + PORT);
+    });
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀 (Demo Mode)");
 });
 
-const PORT = process.env.PORT || 5000;
+  } catch (error) {
+    console.error("Failed to start server due to DB connection error:", error.message);
+    process.exit(1);
+  }
+};
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer();
