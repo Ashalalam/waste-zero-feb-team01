@@ -1,10 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
+const passport = require("passport");
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 
+require("./config/passport")
 const app = express();
 
 app.use(cors({
@@ -17,6 +18,7 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(passport.initialize());
 // Connect to database
 connectDB();
 

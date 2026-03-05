@@ -8,7 +8,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <div>Loading...</div>;
   }
 
-  if (!user) {
+  const token = localStorage.getItem("token");
+  const savedUser = localStorage.getItem("user");
+
+  if (!user && (!token || !savedUser)) {
     return <Navigate to="/" />;
   }
 

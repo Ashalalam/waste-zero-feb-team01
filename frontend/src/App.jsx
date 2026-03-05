@@ -12,6 +12,8 @@ import CreateOpportunity from "./pages/CreateOpportunity";
 import EditOpportunity from "./pages/EditOpportunity";
 import Opportunities from "./pages/Opportunities";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuthCallback from "./pages/AuthCallback";
+import SelectRole from "./pages/SelectRole";
 
 /* --------------------------------------------------
    Main App Component
@@ -66,6 +68,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/select-role" element={<SelectRole />} />
 
           {/* Protected Create Opportunity (NGO Only) */}
           <Route
