@@ -1,22 +1,27 @@
 const Opportunity = require("../models/Opportunity");
+const mongoose = require("mongoose");
 
-// Create a new opportunity
+/* Helper: validate ObjectId */
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+/* ─────────────────────────────
+   CREATE OPPORTUNITY
+   POST /opportunities
+───────────────────────────── */
 exports.createOpportunity = async (req, res) => {
   try {
-    const { title, description, requiredSkills, duration, location, status } = req.body;
+    const { title, description, requiredSkills, duration, location, status } =
+      req.body;
 
-    // Required field validation
     if (!title || !description || !duration || !location) {
       return res.status(400).json({
         success: false,
-        message: "Title, description, duration, and location are required",
+        message: "Title, description, duration and location are required",
       });
     }
 
-    // Determine creator type based on user role
     const createdByType = req.user.role === "ngo" ? "ngo" : "volunteer";
 
-    // Create opportunity
     const opportunity = await Opportunity.create({
       title,
       description,
@@ -25,14 +30,14 @@ exports.createOpportunity = async (req, res) => {
       location,
       status: status || "open",
       createdBy: req.user._id,
-      createdByType: createdByType,
-      ngo: req.user._id, // Keep for backward compatibility
+      createdByType,
+      ngo: req.user._id,
     });
 
     res.status(201).json({
       success: true,
       message: "Opportunity created successfully",
-      opportunity,
+      data: opportunity,
     });
   } catch (error) {
     console.error("Create Opportunity Error:", error);
@@ -43,15 +48,36 @@ exports.createOpportunity = async (req, res) => {
   }
 };
 
-// Get opportunities for logged in user (NGO or volunteer - gets their own created opportunities)
-exports.getMyOpportunities = async (req, res) => {
+/* ─────────────────────────────
+   GET ALL OPPORTUNITIES
+   GET /opportunities
+───────────────────────────── */
+exports.getAllOpportunities = async (req, res) => {
   try {
-    const opportunities = await Opportunity.find({ createdBy: req.user._id })
+    const { location, skills, status } = req.query;
+    const filter = {};
+
+    if (status) {
+      filter.status = status.toLowerCase();
+    }
+
+    if (location) {
+      filter.location = { $regex: location, $options: "i" };
+    }
+
+    if (skills) {
+      const skillsArray = skills.split(",").map((s) => s.trim());
+      filter.requiredSkills = { $in: skillsArray };
+    }
+
+    const opportunities = await Opportunity.find(filter)
       .populate("createdBy", "name email role")
+      .populate("ngo", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
+      count: opportunities.length,
       opportunities,
     });
   } catch (error) {
@@ -63,12 +89,13 @@ exports.getMyOpportunities = async (req, res) => {
   }
 };
 
-// Get all opportunities for NGO (both NGO and volunteer created) - NGO has full access
-exports.getAllOpportunitiesForNgo = async (req, res) => {
+/* ─────────────────────────────
+   GET MY OPPORTUNITIES
+───────────────────────────── */
+exports.getMyOpportunities = async (req, res) => {
   try {
-    const opportunities = await Opportunity.find()
+    const opportunities = await Opportunity.find({ createdBy: req.user._id })
       .populate("createdBy", "name email role")
-      .populate("ngo", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -76,7 +103,7 @@ exports.getAllOpportunitiesForNgo = async (req, res) => {
       opportunities,
     });
   } catch (error) {
-    console.error("Get All Opportunities for NGO Error:", error);
+    console.error("Get My Opportunities Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -84,20 +111,37 @@ exports.getAllOpportunitiesForNgo = async (req, res) => {
   }
 };
 
-// Get all opportunities (for all users - public listing)
-exports.getAllOpportunities = async (req, res) => {
+/* ─────────────────────────────
+   GET OPPORTUNITY BY ID
+───────────────────────────── */
+exports.getOpportunityById = async (req, res) => {
   try {
-    const opportunities = await Opportunity.find({ status: "open" })
+    const { id } = req.params;
+
+    if (!isValidId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid opportunity ID",
+      });
+    }
+
+    const opportunity = await Opportunity.findById(id)
       .populate("createdBy", "name email role")
-      .populate("ngo", "name email")
-      .sort({ createdAt: -1 });
+      .populate("ngo", "name email");
+
+    if (!opportunity) {
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
-      opportunities,
+      opportunity,
     });
   } catch (error) {
-    console.error("Get All Opportunities Error:", error);
+    console.error("Get Opportunity Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -105,18 +149,31 @@ exports.getAllOpportunities = async (req, res) => {
   }
 };
 
-// Update opportunity - NGO can update any, volunteers can only update their own
+/* ─────────────────────────────
+   UPDATE OPPORTUNITY
+───────────────────────────── */
 exports.updateOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, requiredSkills, duration, location, status } = req.body;
+    const { title, description, requiredSkills, duration, location, status } =
+      req.body;
 
-    // Find opportunity - NGO can update any, volunteers can only update their own
+    if (!isValidId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid opportunity ID",
+      });
+    }
+
     let opportunity;
+
     if (req.user.role === "ngo") {
       opportunity = await Opportunity.findById(id);
     } else {
-      opportunity = await Opportunity.findOne({ _id: id, createdBy: req.user._id });
+      opportunity = await Opportunity.findOne({
+        _id: id,
+        createdBy: req.user._id,
+      });
     }
 
     if (!opportunity) {
@@ -128,7 +185,8 @@ exports.updateOpportunity = async (req, res) => {
 
     opportunity.title = title || opportunity.title;
     opportunity.description = description || opportunity.description;
-    opportunity.requiredSkills = requiredSkills || opportunity.requiredSkills;
+    opportunity.requiredSkills =
+      requiredSkills || opportunity.requiredSkills;
     opportunity.duration = duration || opportunity.duration;
     opportunity.location = location || opportunity.location;
     opportunity.status = status || opportunity.status;
@@ -149,12 +207,20 @@ exports.updateOpportunity = async (req, res) => {
   }
 };
 
-// Delete opportunity - NGO can only delete their own opportunities, volunteers can only delete their own
+/* ─────────────────────────────
+   DELETE OPPORTUNITY
+───────────────────────────── */
 exports.deleteOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // First, find the opportunity to check who created it
+    if (!isValidId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid opportunity ID",
+      });
+    }
+
     const opportunity = await Opportunity.findById(id);
 
     if (!opportunity) {
@@ -164,11 +230,9 @@ exports.deleteOpportunity = async (req, res) => {
       });
     }
 
-    // Check if user has permission to delete
-    // NGO can only delete opportunities they created
-    // Volunteers can only delete opportunities they created
-    const isCreator = opportunity.createdBy.toString() === req.user._id.toString();
-    
+    const isCreator =
+      opportunity.createdBy.toString() === req.user._id.toString();
+
     if (!isCreator) {
       return res.status(403).json({
         success: false,
@@ -176,7 +240,6 @@ exports.deleteOpportunity = async (req, res) => {
       });
     }
 
-    // Delete the opportunity
     await Opportunity.findByIdAndDelete(id);
 
     res.status(200).json({
@@ -192,7 +255,9 @@ exports.deleteOpportunity = async (req, res) => {
   }
 };
 
-// Apply to an opportunity (for volunteers)
+/* ─────────────────────────────
+   APPLY TO OPPORTUNITY
+───────────────────────────── */
 exports.applyToOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -214,7 +279,6 @@ exports.applyToOpportunity = async (req, res) => {
       });
     }
 
-    // Check if user has already applied
     const alreadyApplied = opportunity.applicants.some(
       (applicant) => applicant.user.toString() === userId.toString()
     );
@@ -226,7 +290,6 @@ exports.applyToOpportunity = async (req, res) => {
       });
     }
 
-    // Add applicant
     opportunity.applicants.push({
       user: userId,
       status: "pending",
@@ -239,7 +302,7 @@ exports.applyToOpportunity = async (req, res) => {
       message: "Application submitted successfully",
     });
   } catch (error) {
-    console.error("Apply to Opportunity Error:", error);
+    console.error("Apply Opportunity Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -247,20 +310,24 @@ exports.applyToOpportunity = async (req, res) => {
   }
 };
 
-// Get my applications (for volunteers)
+/* ─────────────────────────────
+   GET MY APPLICATIONS
+───────────────────────────── */
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const opportunities = await Opportunity.find({
       "applicants.user": userId,
-    }).populate("ngo", "name email").populate("createdBy", "name email role");
+    })
+      .populate("ngo", "name email")
+      .populate("createdBy", "name email role");
 
-    // Filter to show only user's applications
     const applications = opportunities.map((opp) => {
       const application = opp.applicants.find(
         (app) => app.user.toString() === userId.toString()
       );
+
       return {
         _id: opp._id,
         title: opp.title,
