@@ -19,11 +19,12 @@ passport.use(
           user = await User.create({
             googleId: profile.id,
             name: profile.displayName,
-            email: profile.emails[0].value,
-            profilePic: profile.photos[0].value,
+            email:
+              profile.emails?.[0]?.value || `${profile.id}@google-oauth.local`,
+            profilePic: profile.photos?.[0]?.value || null,
             role: null,
-            password: "google-oauth-no-password", 
-            username: profile.emails[0].value.split("@")[0],
+            password: null,
+            username: (profile.emails?.[0]?.value || profile.id).split("@")[0],
           });
         }
 

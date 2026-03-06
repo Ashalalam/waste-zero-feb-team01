@@ -141,7 +141,7 @@ const Register = () => {
     confirmPassword: "",
     role: "volunteer",
   });
-  const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "", role: "volunteer"   });
+  
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });

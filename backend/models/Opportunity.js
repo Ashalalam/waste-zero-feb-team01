@@ -67,4 +67,9 @@ const opportunitySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Database indexes for performance
+opportunitySchema.index({ createdBy: 1 });
+opportunitySchema.index({ status: 1 });
+opportunitySchema.index({ location: 1 });
+
 module.exports = mongoose.model("Opportunity", opportunitySchema);
