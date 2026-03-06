@@ -7,7 +7,7 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, username, password, role } = req.body;
 
-    // 1️⃣ Required field validation
+    // Required field validation
     if (!name || !email || !password || !role) {
       return res.status(400).json({
         success: false,
@@ -87,6 +87,7 @@ exports.registerUser = async (req, res) => {
         bio: user.bio,
       },
     });
+
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({
@@ -100,7 +101,6 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1️⃣ Required field validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
