@@ -4,7 +4,10 @@ require("dotenv").config();
 
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
-
+const authRoutes = require("./routes/authRoutes");
+const opportunityRoutes = require("./routes/opportunityRoutes");
+const matchRoutes = require("./routes/matchRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 const app = express();
 
 // ── CORS Configuration (allow frontend requests) ─────────────
@@ -25,6 +28,9 @@ connectDB();
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
+app.use("/api/matches", matchRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 // ── Root Route ───────────────────────────────────────────────
 app.get("/", (req, res) => {
