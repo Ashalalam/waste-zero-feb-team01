@@ -1,31 +1,19 @@
 const express = require("express");
 const router = express.Router();
 
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
+
 const {
   createOpportunity,
   getAllOpportunities,
   getOpportunityById,
   updateOpportunity,
   deleteOpportunity,
-  getMyOpportunities,
-  getAllOpportunities,
-  getAllOpportunitiesForNgo,
-  updateOpportunity,
-  deleteOpportunity,
-  applyToOpportunity,
-  getMyApplications,
 } = require("../controllers/opportunityController");
 
-const authMiddleware = require("../middleware/authMiddleware");
-const roleMiddleware = require("../middleware/roleMiddleware");
 
-// ── GET /opportunities  — public, supports ?location=&skills=&status=
-router.get("/", getAllOpportunities);
-
-// ── GET /opportunities/:id  — public
-router.get("/:id", getOpportunityById);
-
-// ── POST /opportunities  — NGO only
+// CREATE OPPORTUNITY (NGO only)
 router.post(
   "/",
   authMiddleware,
@@ -33,32 +21,21 @@ router.post(
   createOpportunity
 );
 
-// ── PUT /opportunities/:id  — NGO only + ownership checked in controller
-router.put(
-  "/:id",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  updateOpportunity
-);
 
-// ── DELETE /opportunities/:id  — NGO only + ownership checked in controller
-router.delete(
-  "/:id",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  deleteOpportunity
-);
+// GET ALL OPPORTUNITIES
+router.get("/", getAllOpportunities);
 
-module.exports = router;
 
-router.post("/", authMiddleware, createOpportunity);
-router.get("/", authMiddleware, getMyOpportunities);
-router.get("/all", getAllOpportunities);
-// NGO can get all opportunities (both NGO and volunteer created)
-router.get("/ngo/all", authMiddleware, roleMiddleware("ngo"), getAllOpportunitiesForNgo);
-router.get("/my-applications", authMiddleware, getMyApplications);
+// GET SINGLE OPPORTUNITY
+router.get("/:id", getOpportunityById);
+
+
+// UPDATE OPPORTUNITY
 router.put("/:id", authMiddleware, updateOpportunity);
+
+
+// DELETE OPPORTUNITY
 router.delete("/:id", authMiddleware, deleteOpportunity);
-router.post("/:id/apply", authMiddleware, applyToOpportunity);
+
 
 module.exports = router;
