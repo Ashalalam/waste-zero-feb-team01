@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["volunteer", "ngo", "admin"],
       default: null,
-      required: true,
+      required: false,
     },
 
     skills: {
