@@ -12,14 +12,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const savedUser = localStorage.getItem("user");
 
   if (!user && (!token || !savedUser)) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
-  // If allowedRoles is specified, check user role
-  if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = user.role?.toLowerCase();
-    if (!allowedRoles.includes(userRole)) {
-      return <Navigate to="/dashboard" />;
+  const userRole = user.role?.toLowerCase();
+
+  // If route has role restriction
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Redirect based on actual role
+    if (userRole === "ngo") {
+      return <Navigate to="/ngo-dashboard" replace />;
+    } else {
+      return <Navigate to="/volunteer-dashboard" replace />;
     }
   }
 

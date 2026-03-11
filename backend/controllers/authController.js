@@ -4,12 +4,14 @@ const validator = require("validator");
 const generateToken = require("../utils/generateToken");
 
 // ================= REGISTER =================
+// REGISTER USER
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, username, password, role } = req.body;
 
     // Required fields
     if (!name || !email || !password || !role) {
+    if (!name || !email || !username || !password || !role) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -21,6 +23,7 @@ exports.registerUser = async (req, res) => {
 
     // Email validation
     if (!validator.isEmail(normalizedEmail)) {
+    if (!validator.isEmail(email)) {
       return res.status(400).json({
         success: false,
         message: "Invalid email format",
@@ -38,14 +41,17 @@ exports.registerUser = async (req, res) => {
 
     // Role validation
     if (!["volunteer", "ngo"].includes(normalizedRole)) {
+    if (!["volunteer", "ngo", "admin"].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid role. Must be volunteer or NGO",
+        message: "Invalid role",
       });
     }
 
     // Check existing user
     const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -58,12 +64,15 @@ exports.registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const user = await User.create({
       name,
       email: normalizedEmail,
       username,
       password: hashedPassword,
-      role: normalizedRole,
+      role,
     });
 
     // Generate token
@@ -96,6 +105,7 @@ exports.registerUser = async (req, res) => {
 
 
 // ================= LOGIN =================
+// LOGIN USER
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -110,6 +120,8 @@ exports.loginUser = async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
 
     const user = await User.findOne({ email: normalizedEmail });
+
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
@@ -128,6 +140,7 @@ exports.loginUser = async (req, res) => {
     }
 
     const token = generateToken(user);
+    const token = generateToken(user._id);
 
     res.status(200).json({
       success: true,
@@ -137,13 +150,13 @@ exports.loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        username: user.username,
         role: user.role,
         skills: user.skills,
         location: user.location,
         bio: user.bio,
       },
     });
-
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({
@@ -155,6 +168,7 @@ exports.loginUser = async (req, res) => {
 
 
 // ================= GET PROFILE =================
+// GET USER PROFILE
 exports.getUserProfile = async (req, res) => {
   res.status(200).json({
     success: true,
@@ -164,6 +178,7 @@ exports.getUserProfile = async (req, res) => {
 
 
 // ================= UPDATE PROFILE =================
+// UPDATE USER PROFILE
 exports.updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -186,9 +201,20 @@ exports.updateUserProfile = async (req, res) => {
       success: true,
       message: "Profile updated successfully",
       user: updatedUser,
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        role: updatedUser.role,
+        skills: updatedUser.skills,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+      },
     });
 
   } catch (error) {
+    console.error("Update Profile Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -198,6 +224,7 @@ exports.updateUserProfile = async (req, res) => {
 
 
 // ================= CHANGE PASSWORD =================
+// CHANGE PASSWORD
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -226,6 +253,15 @@ exports.changePassword = async (req, res) => {
 
     const user = await User.findById(req.user._id);
 
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password cannot be same as current password",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
     const isMatch = await bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
@@ -239,16 +275,14 @@ exports.changePassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     user.password = hashedPassword;
-
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
     });
-
   } catch (error) {
-    console.error("Change Password Error:", error.message);
+    console.error("Change Password Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
