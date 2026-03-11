@@ -2,26 +2,27 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth, AuthProvider } from "./context/AuthContext";
 import Sidebar from "./components/layout/Sidebar";
 
-import Login              from "./pages/Login";
-import Register           from "./pages/Register";
-import DashboardSelect    from "./pages/DashboardSelect";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import DashboardSelect from "./pages/DashboardSelect";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
-import NgoDashboard       from "./pages/NgoDashboard";
-import Profile            from "./pages/Profile";
-import CreateOpportunity  from "./pages/CreateOpportunity";
-import EditOpportunity    from "./pages/EditOpportunity";
-import Opportunities      from "./pages/Opportunities";
-import ProtectedRoute     from "./components/ProtectedRoute";
+import NgoDashboard from "./pages/NgoDashboard";
+import Profile from "./pages/Profile";
+import CreateOpportunity from "./pages/CreateOpportunity";
+import EditOpportunity from "./pages/EditOpportunity";
+import Opportunities from "./pages/Opportunities";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthCallback from "./pages/AuthCallback";
+import SelectRole from "./pages/SelectRole";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
           {/* ── Public ───────────────────────────────────────── */}
-          <Route path="/"         element={<Login />} />
-          <Route path="/login"    element={<Login />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
           {/* ── Auto-redirect based on role ───────────────────── */}
@@ -43,6 +44,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Protected Create Opportunity (NGO Only) */}
           <Route
             path="/create-opportunity"
             element={
@@ -87,10 +90,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/select-role" element={<SelectRole />} />
 
           {/* ── Catch all ────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" />} />
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>

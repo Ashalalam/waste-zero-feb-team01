@@ -8,8 +8,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <div>Loading...</div>;
   }
 
-  // If user not logged in → send to login
-  if (!user) {
+  const token = localStorage.getItem("token");
+  const savedUser = localStorage.getItem("user");
+
+  if (!user && (!token || !savedUser)) {
     return <Navigate to="/" replace />;
   }
 
@@ -17,7 +19,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   // If route has role restriction
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-
     // Redirect based on actual role
     if (userRole === "ngo") {
       return <Navigate to="/ngo-dashboard" replace />;

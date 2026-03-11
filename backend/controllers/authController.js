@@ -3,7 +3,8 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const generateToken = require("../utils/generateToken");
 
-// REGISTER USER
+
+// ================= REGISTER =================
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, username, password, role } = req.body;
@@ -15,7 +16,10 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    if (!validator.isEmail(email)) {
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedRole = role.toLowerCase();
+
+    if (!validator.isEmail(normalizedEmail)) {
       return res.status(400).json({
         success: false,
         message: "Invalid email format",
@@ -30,14 +34,14 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    if (!["volunteer", "ngo", "admin"].includes(role)) {
+    if (!["volunteer", "ngo", "admin"].includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
         message: "Invalid role",
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(400).json({
@@ -51,13 +55,13 @@ exports.registerUser = async (req, res) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       username,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(201).json({
       success: true,
@@ -74,6 +78,7 @@ exports.registerUser = async (req, res) => {
         bio: user.bio,
       },
     });
+
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({
@@ -83,9 +88,14 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// LOGIN USER
+
+// ================= LOGIN =================
+
+
 exports.loginUser = async (req, res) => {
   try {
+    
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -95,7 +105,10 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
+
 
     if (!user) {
       return res.status(400).json({
@@ -104,7 +117,34 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+
+    let isMatch = false;
+
+    // If password is hashed
+    if (
+      typeof user.password === "string" &&
+      (user.password.startsWith("$2a$") ||
+        user.password.startsWith("$2b$") ||
+        user.password.startsWith("$2y$"))
+    ) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Plain text password fallback (for old accounts)
+      if (password === user.password) {
+        isMatch = true;
+
+        // Upgrade to hashed password automatically
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        console.log("Password upgraded to bcrypt hash");
+      }
+    }
+
+   
 
     if (!isMatch) {
       return res.status(400).json({
@@ -113,7 +153,7 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       success: true,
@@ -132,6 +172,7 @@ exports.loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -139,7 +180,8 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// GET USER PROFILE
+
+// ================= GET PROFILE =================
 exports.getUserProfile = async (req, res) => {
   res.status(200).json({
     success: true,
@@ -147,7 +189,8 @@ exports.getUserProfile = async (req, res) => {
   });
 };
 
-// UPDATE USER PROFILE
+
+// ================= UPDATE PROFILE =================
 exports.updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -180,6 +223,7 @@ exports.updateUserProfile = async (req, res) => {
         bio: updatedUser.bio,
       },
     });
+
   } catch (error) {
     console.error("Update Profile Error:", error);
     res.status(500).json({
@@ -189,7 +233,8 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-// CHANGE PASSWORD
+
+// ================= CHANGE PASSWORD =================
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -218,13 +263,6 @@ exports.changePassword = async (req, res) => {
 
     const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
     const isMatch = await bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
@@ -244,6 +282,7 @@ exports.changePassword = async (req, res) => {
       success: true,
       message: "Password updated successfully",
     });
+
   } catch (error) {
     console.error("Change Password Error:", error);
     res.status(500).json({

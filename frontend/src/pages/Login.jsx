@@ -13,22 +13,26 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     if (!formData.email || !formData.password) {
       setError("Please fill all fields");
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     setError("");
 
     try {
+      console.log("Sending login request:", formData);
+
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
@@ -42,24 +46,27 @@ const Login = () => {
 
       const data = await response.json();
 
+      console.log("Login response:", data);
+
       if (!response.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || "Invalid email or password");
         setIsLoading(false);
         return;
       }
 
-     // Clear old session
-localStorage.removeItem("user");
-localStorage.removeItem("token");
+      // Clear old session completely
+      localStorage.clear();
 
-// Save new session
-localStorage.setItem("token", data.token);
-localStorage.setItem("user", JSON.stringify(data.user));
+      // Save new session
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-// Update React state
-updateUser(data.user);
+      // Update React context
+      updateUser(data.user);
 
-      // Redirect based on role
+      console.log("Login successful:", data.user);
+
+      // Redirect by role
       if (data.user.role === "ngo") {
         navigate("/ngo-dashboard");
       } else {
@@ -74,31 +81,23 @@ updateUser(data.user);
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    const userData = {
-      name: `${provider} User`,
-      role: "volunteer",
-      email: `user@${provider.toLowerCase()}.com`,
-    };
-
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", "demo-token");
-
-    updateUser(userData);
-
-    // Social login default → volunteer dashboard
-    navigate("/volunteer-dashboard");
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
     <div className="login-page">
       <div className="login-card">
+
+        {/* LEFT PANEL */}
         <div className="lc-left">
           <div className="lc-left-glow" />
+
           <div className="lc-brand">
             <div className="lc-logo-wrap">
               <img src="/images/Logo.png" alt="WasteZero Logo" />
             </div>
+
             <h3>WasteZero Initiative</h3>
             <p>Together we care for the future of the next generations</p>
           </div>
@@ -109,13 +108,17 @@ updateUser(data.user);
           </div>
         </div>
 
+        {/* RIGHT PANEL */}
         <div className="lc-right">
+
           <h2>Login</h2>
           <p>Enter your details to log in.</p>
 
           {error && <div className="lc-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
+
+            {/* EMAIL */}
             <div className="lc-field">
               <input
                 type="email"
@@ -128,6 +131,7 @@ updateUser(data.user);
               />
             </div>
 
+            {/* PASSWORD */}
             <div className="lc-field">
               <input
                 type={showPassword ? "text" : "password"}
@@ -149,13 +153,52 @@ updateUser(data.user);
               </button>
             </div>
 
-            <button type="submit" className="lc-submit" disabled={isLoading}>
+            {/* LOGIN BUTTON */}
+            <button
+              type="submit"
+              className="lc-submit"
+              disabled={isLoading}
+            >
               {isLoading ? "Logging in…" : "Continue"}
             </button>
+
           </form>
 
+          {/* DIVIDER */}
           <div className="lc-divider">OR</div>
 
+          {/* GOOGLE LOGIN */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              marginBottom: "10px",
+              border: "1.5px solid #e0e0e0",
+              borderRadius: "11px",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#3c3c3c",
+              background: "#ffffff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            }}
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              style={{ width: "20px", height: "20px" }}
+            />
+            Continue with Google
+          </button>
+
+          {/* REGISTER LINK */}
           <p className="lc-register-link">
             Don't have an account?{" "}
             <Link to="/register" className="lc-link">
@@ -163,12 +206,14 @@ updateUser(data.user);
             </Link>
           </p>
 
+          {/* TERMS */}
           <p className="lc-terms">
             By continuing, you agree to the updated{" "}
             <a href="/terms" className="lc-link">Terms of Sale</a>,{" "}
             <a href="/terms" className="lc-link">Terms of Service</a>, and{" "}
             <a href="/privacy" className="lc-link">Privacy Policy</a>.
           </p>
+
         </div>
       </div>
     </div>
