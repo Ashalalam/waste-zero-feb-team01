@@ -16,6 +16,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ChatPage from "./pages/ChatPage";
 import Matches from "./pages/Matches";
 import SelectRole from "./pages/SelectRole";
+import Messages from "./pages/Messages";
 
 function App() {
   return (
@@ -108,6 +109,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+  path="/messages"
+  element={
+    <ProtectedRoute>
+      <Messages />
+    </ProtectedRoute>
+  }
+/>
+
+
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/select-role" element={<SelectRole />} />
 

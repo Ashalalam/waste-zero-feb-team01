@@ -1,8 +1,7 @@
 import axios from "axios";
-import { API_BASE_URL } from "./config";
 
 const API = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "http://localhost:5000/api",
 });
 
 // Attach token automatically
@@ -33,6 +32,10 @@ export const getAllOpportunitiesForNgo = () =>
 export const getMyOpportunities = () =>
   API.get("/opportunities/my-opportunities");
 
+// NGO: get applicants with skill match for an opportunity
+export const getOpportunityApplicants = (id) =>
+  API.get(`/opportunities/${id}/applicants`);
+
 // Single opportunity
 export const getOpportunityById = (id) => API.get(`/opportunities/${id}`);
 
@@ -51,3 +54,5 @@ export const getMyApplications = () =>
 // ── MESSAGING ──────────────────────────────────────────────────────
 export const sendMessage = (payload) => API.post("/messages", payload);
 export const getMessages = (userId) => API.get(`/messages/${userId}`);
+export const applyToOpportunity = (id, data = {}) => API.post(`/opportunities/${id}/apply`, data);
+export const getMyApplications  = ()   => API.get("/opportunities/my-applications");
