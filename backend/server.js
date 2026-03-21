@@ -1,170 +1,120 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-const passport = require("passport");
+  const express = require("express");
+  const cors = require("cors");
+  require("dotenv").config();
+  const passport = require("passport");
 
-const connectDB = require("./config/db");
-const errorHandler = require("./middleware/errorHandler");
+  const connectDB = require("./config/db");
+  const errorHandler = require("./middleware/errorHandler");
 
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+  const helmet = require("helmet");
+  const rateLimit = require("express-rate-limit");
 
-require("./config/passport");
+  // ✅ NEW: required for socket
+  const http = require("http");
+  const { Server } = require("socket.io");
 
-const matchRoutes = require("./routes/matchRoutes");
-const messageRoutes = require("./routes/messageRoutes");
+  require("./config/passport");
 
-const app = express();
+  const matchRoutes = require("./routes/matchRoutes");
+  const messageRoutes = require("./routes/messageRoutes");
 
-const http = require("http");
-const { Server } = require("socket.io");
+  const app = express();
 
-const server = http.createServer(app);
+  // 🔥 DEBUG: check if env is loading
+  console.log("MONGO_URI:", process.env.MONGO_URI);
 
-const Notification = require("./models/Notification");
+  // ✅ CREATE HTTP SERVER
+  const server = http.createServer(app);
 
-// ================= SOCKET.IO =================
-const io = new Server(server, {
-  cors: { origin: "*" },
-  transports: ["websocket"], // ⭐ keep this
-});
+  // ✅ CONNECT DATABASE (MOVE UP)
+  connectDB();
 
-app.set("io", io);
-
-// ================= MIDDLEWARE =================
-app.use(cors({ origin: "*" }));
-app.use(express.json());
-app.use(passport.initialize());
-
-// ================= SECURITY =================
-app.use(helmet());
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
-
-// ================= DATABASE =================
-connectDB();
-
-// ================= ROUTES =================
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-app.use("/api/matches", matchRoutes);
-app.use("/api/messages", messageRoutes);
-
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
-});
-
-// ================= ERROR =================
-app.use(errorHandler);
-
-// ================= SOCKET AUTH =================
-const jwt = require("jsonwebtoken");
-
-io.use((socket, next) => {
-  try {
-    const token = socket.handshake.auth?.token;
-
-    if (!token || token === "undefined") {
-      socket.user = { _id: "tempUser" };
-      return next();
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded;
-
-    next();
-  } catch (err) {
-    socket.user = { _id: "tempUser" };
-    next();
+  // ✅ INITIALIZE SOCKET.IO
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-// ================= SOCKET CONNECTION =================
-const onlineUsers = new Map();
+  // ✅ STORE CONNECTED USERS
+  const users = {};
 
-io.on("connection", (socket) => {
-  console.log("✅ User connected:", socket.user._id);
+  // ✅ SOCKET CONNECTION
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
 
-  const userId = socket.user._id.toString();
-
-  // store user
-  onlineUsers.set(userId, socket.id);
-
-  // join room
-  socket.join(userId);
-
-  // -------- SEND MESSAGE --------
-  socket.on("sendMessage", async ({ receiverId, message }) => {
-    console.log("🔥 sendMessage triggered");
-
-    const receiverSocket = onlineUsers.get(receiverId);
-
-    let notif = null;
-
-    // save only if valid user
-    if (receiverId !== "tempUser") {
-      notif = await Notification.create({
-        user: receiverId,
-        type: "message",
-        message: "New message received 💬",
+    setTimeout(() => {
+      socket.emit("new_message", {
+        sender_id: "Server",
+        content: "Hello Asha 🔥 Real-time working!",
       });
+    }, 2000);
 
-      console.log("📦 Notification saved:", notif._id);
-    }
+    socket.on("register", (userId) => {
+      users[userId] = socket.id;
+      console.log("User registered:", userId);
+    });
 
-    // emit message
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("newMessage", {
-        senderId: userId,
-        message,
-      });
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
 
-      if (notif) {
-        io.to(receiverSocket).emit("notification", notif);
+      for (let userId in users) {
+        if (users[userId] === socket.id) {
+          delete users[userId];
+        }
       }
-    }
+    });
   });
 
-  // -------- NEW MATCH --------
-  socket.on("newMatch", async ({ receiverId, matchData }) => {
-    const receiverSocket = onlineUsers.get(receiverId);
+  // ✅ MAKE io AVAILABLE IN ROUTES
+  app.set("io", io);
+  app.set("users", users);
 
-    let notif = null;
+  // Security headers
+  app.use(helmet());
 
-    if (receiverId !== "tempUser") {
-      notif = await Notification.create({
-        user: receiverId,
-        type: "match",
-        message: "You got selected 🎉",
-      });
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests, please try again later.",
+  });
+  app.use(limiter);
 
-      console.log("📦 Match Notification saved:", notif._id);
-    }
+  // CORS
 
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("newMatch", matchData);
 
-      if (notif) {
-        io.to(receiverSocket).emit("notification", notif);
-      }
-    }
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
+  // Body parser
+  app.use(express.json());
+
+  // Passport
+  app.use(passport.initialize());
+
+  // Routes
+  app.use("/api/auth", require("./routes/authRoutes"));
+  app.use("/api/users", require("./routes/userRoutes"));
+  app.use("/api/opportunities", require("./routes/opportunityRoutes"));
+  app.use("/api/matches", matchRoutes);
+  app.use("/api/messages", messageRoutes);
+
+  // Root route
+  app.get("/", (req, res) => {
+    res.send("Backend is running 🚀");
   });
 
-  // -------- DISCONNECT --------
-  socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", userId);
-    onlineUsers.delete(userId);
+  // Error handler
+  app.use(errorHandler);
+
+  // Start server
+  const PORT = process.env.PORT || 5000;
+
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
-});
-
-// ================= START =================
-const PORT = 5000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});

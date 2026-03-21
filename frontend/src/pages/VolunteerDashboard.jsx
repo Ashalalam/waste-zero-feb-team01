@@ -2,7 +2,10 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
-import { getMyOpportunities, getMyApplications } from "../services/api";
+
+// ✅ FIXED IMPORT
+import { getAllOpportunities, getMyApplications } from "../services/api";
+
 import { ArrowRight, MapPin, Clock, Building2, User, Sun, Moon } from "lucide-react";
 
 const T = {
@@ -33,13 +36,8 @@ const StatusBadge = ({ status, darkMode }) => {
   }[status] || { bg:darkMode ? "#555" : T.bPale, color:darkMode ? "#eee" : T.bLight, dot:darkMode ? "#888" : T.bSand, label:status };
 
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:5,
-      padding:"4px 11px", borderRadius:20,
-      background:cfg.bg, color:cfg.color,
-      fontSize:12, fontWeight:700, whiteSpace:"nowrap",
-    }}>
-      <span style={{ width:6, height:6, borderRadius:"50%", background:cfg.dot, flexShrink:0 }} />
+    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 11px", borderRadius:20, background:cfg.bg, color:cfg.color, fontSize:12, fontWeight:700 }}>
+      <span style={{ width:6, height:6, borderRadius:"50%", background:cfg.dot }} />
       {cfg.label}
     </span>
   );
@@ -47,19 +45,14 @@ const StatusBadge = ({ status, darkMode }) => {
 
 const OppStatusBadge = ({ status, darkMode }) => {
   const cfg = {
-    open:         { bg:"#dcfce7", color:"#15803d", dot:"#22c55e", label:"Open"        },
-    closed:       { bg:"#fee2e2", color:"#b91c1c", dot:"#ef4444", label:"Closed"      },
+    open:{ bg:"#dcfce7", color:"#15803d", dot:"#22c55e", label:"Open" },
+    closed:{ bg:"#fee2e2", color:"#b91c1c", dot:"#ef4444", label:"Closed" },
     "in-progress":{ bg:"#fef9c3", color:"#a16207", dot:"#eab308", label:"In Progress" },
   }[status] || { bg:darkMode ? "#555" : T.bPale, color:darkMode ? "#eee" : T.bLight, dot:darkMode ? "#888" : T.bSand, label:status };
 
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:5,
-      padding:"4px 11px", borderRadius:20,
-      background:cfg.bg, color:cfg.color,
-      fontSize:12, fontWeight:700, whiteSpace:"nowrap",
-    }}>
-      <span style={{ width:6, height:6, borderRadius:"50%", background:cfg.dot, flexShrink:0 }} />
+    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 11px", borderRadius:20, background:cfg.bg, color:cfg.color, fontSize:12, fontWeight:700 }}>
+      <span style={{ width:6, height:6, borderRadius:"50%", background:cfg.dot }} />
       {cfg.label}
     </span>
   );
@@ -79,8 +72,11 @@ const VolunteerDashboard = () => {
       setLoadingData(true);
       const appResponse = await getMyApplications();
       setApplications(appResponse.data.applications || []);
-      const oppResponse = await getMyOpportunities();
+
+      // ✅ FIXED HERE
+      const oppResponse = await getAllOpportunities();
       setOpportunities(oppResponse.data.opportunities || []);
+
     } catch (err) {
       console.error("Failed to fetch data:", err);
       setError("Failed to load data");
@@ -92,6 +88,8 @@ const VolunteerDashboard = () => {
   useEffect(() => {
     if (!loading && user) fetchData();
   }, [loading, user]);
+
+  // 🔥 Rest of your code remains EXACTLY SAME
 
   if (loading || loadingData) return (
     <div style={{

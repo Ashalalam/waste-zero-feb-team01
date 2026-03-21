@@ -109,6 +109,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+ <Route
   path="/messages"
   element={
     <ProtectedRoute>
@@ -116,6 +117,7 @@ function App() {
     </ProtectedRoute>
   }
 />
+
 
 
           <Route path="/auth/callback" element={<AuthCallback />} />
